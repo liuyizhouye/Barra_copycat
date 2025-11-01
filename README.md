@@ -1,6 +1,6 @@
-# toraniko
+# Barra Copycat
 
-Toraniko is a complete implementation of a risk model suitable for quantitative and systematic trading at institutional scale. In particular, it is a characteristic factor model in the same vein as Barra and Axioma (in fact, given the same datasets, it approximately reproduces Barra's estimated factor returns).
+Barra Copycat is a complete implementation of a risk model suitable for quantitative and systematic trading at institutional scale. In particular, it is a characteristic factor model in the same vein as Barra and Axioma (in fact, given the same datasets, it approximately reproduces Barra's estimated factor returns).
 
 ![mom_factor](https://github.com/user-attachments/assets/f9d2927c-e899-4fd6-944c-8f9a104b410f)
 
@@ -12,7 +12,7 @@ The only dependencies are numpy and polars. It supports market, sector and style
 
 Using pip:
 
-`pip install toraniko`
+`pip install Barra-copycat`
 
 ## User Manual
 

@@ -6,7 +6,7 @@ with open('requirements.txt', 'r') as fh:
         requirements.append(line.strip())
 
 setup(
-    name="toraniko",
+    name="Barra_copycat",
     version="1.1.0",
     packages=find_packages(),
     install_requires = requirements

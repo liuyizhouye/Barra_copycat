@@ -3,15 +3,15 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-name = "toraniko"
+name = "Barra_copycat"
 version = "1.1.0"
 description = "A multi-factor equity risk model for quantitative trading."
-authors = ["0xfdf <0xfdf@implies.com>"]
-maintainers = ["0xfdf <0xfdf@implies.com>"]
+authors = ["liuyizhou <liuyizhouye@outlook.com>"]
+maintainers = ["liuyizhou <liuyizhouye@outlook.com>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/0xfdf/toraniko"
-repository = "https://github.com/0xfdf/toraniko"
+homepage = "https://github.com/liuyizhouye/Barra_copycat"
+repository = "https://github.com/liuyizhouye/Barra_copycat"
 keywords = ["risk", "model", "portfolio", "optimization", "factor", "quant", "quantitative", "finance", "trading"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -33,10 +33,10 @@ polars = "~1.0.0"
 pytest = "~7.4.4"
 
 [tool.poetry.urls]
-homepage = "https://github.com/0xfdf/toraniko"
-repository = "https://github.com/0xfdf/toraniko"
-issues = "https://github.com/0xfdf/toraniko/issues"
-changelog = "https://github.com/0xfdf/toraniko/releases"
+homepage = "https://github.com/liuyizhouye/Barra_copycat"
+repository = "https://github.com/liuyizhouye/Barra_copycat"
+issues = "https://github.com/liuyizhouye/Barra_copycat/issues"
+changelog = "https://github.com/liuyizhouye/Barra_copycat/releases"
 
 [tool.ruff]
 line-length = 120
