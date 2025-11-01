@@ -4,7 +4,7 @@ import numpy as np
 import polars as pl
 import polars.exceptions as pl_exc
 
-from toraniko.math import (
+from barra_copycat.math import (
     exp_weights,
     center_xsection,
     percentiles_xsection,

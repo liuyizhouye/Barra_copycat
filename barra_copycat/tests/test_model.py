@@ -3,7 +3,7 @@
 import polars as pl
 import pytest
 import numpy as np
-from toraniko.model import _factor_returns, estimate_factor_returns
+from barra_copycat.model import _factor_returns, estimate_factor_returns
 
 ###
 # `_factor_returns`

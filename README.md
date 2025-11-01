@@ -21,7 +21,7 @@ pip install Barra-copycat
 ### 文件结构
 
 ```
-toraniko/
+barra_copycat/
 ├── __init__.py          # 空文件，标识为Python包
 ├── model.py             # 核心模型：因子收益估计
 ├── styles.py            # 风格因子构建
@@ -62,7 +62,7 @@ toraniko/
 
 **代码示例**：
 ```python
-from toraniko.model import estimate_factor_returns
+from barra_copycat.model import estimate_factor_returns
 
 factor_returns_df, residual_returns_df = estimate_factor_returns(
     returns_df,        # 日度收益数据
@@ -83,7 +83,7 @@ factor_returns_df, residual_returns_df = estimate_factor_returns(
 使用指数加权滚动收益计算动量得分。
 
 ```python
-from toraniko.styles import factor_mom
+from barra_copycat.styles import factor_mom
 
 mom_scores = factor_mom(
     returns_df,
@@ -101,7 +101,7 @@ mom_scores = factor_mom(
 基于市值对数，实现 Small-Minus-Big（SMB）。
 
 ```python
-from toraniko.styles import factor_sze
+from barra_copycat.styles import factor_sze
 
 sze_scores = factor_sze(mkt_cap_df).collect()
 ```
@@ -111,7 +111,7 @@ sze_scores = factor_sze(mkt_cap_df).collect()
 基于价格比率（book-price, sales-price, cf-price）计算价值得分。
 
 ```python
-from toraniko.styles import factor_val
+from barra_copycat.styles import factor_val
 
 val_scores = factor_val(value_df).collect()
 ```
@@ -170,7 +170,7 @@ date	symbol	book_price	sales_price	cf_price	market_cap
 ### 2. 构建风格因子
 
 ```python
-from toraniko.styles import factor_mom, factor_sze, factor_val
+from barra_copycat.styles import factor_mom, factor_sze, factor_val
 
 # 动量因子
 mom_scores = factor_mom(returns_df).collect()
@@ -189,8 +189,8 @@ style_df = mom_scores.join(sze_scores, on=["date", "symbol"]) \
 ### 3. 估计因子收益
 
 ```python
-from toraniko.utils import top_n_by_group
-from toraniko.model import estimate_factor_returns
+from barra_copycat.utils import top_n_by_group
+from barra_copycat.model import estimate_factor_returns
 
 # 合并数据并取市值前3000（如 Russell 3000）
 ddf = (
@@ -268,7 +268,7 @@ print(fac_df.head())
 项目使用 pytest 进行单元测试：
 
 ```bash
-pytest toraniko/tests/
+pytest barra_copycat/tests/
 ```
 
 ---

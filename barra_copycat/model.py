@@ -4,7 +4,7 @@ import numpy as np
 import polars as pl
 import polars.exceptions as pl_exc
 
-from toraniko.math import winsorize
+from barra_copycat.math import winsorize
 
 
 def _factor_returns(

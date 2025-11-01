@@ -5,7 +5,7 @@ import polars as pl
 import numpy as np
 from polars.testing import assert_frame_equal
 
-from toraniko.utils import fill_features, smooth_features, top_n_by_group
+from barra_copycat.utils import fill_features, smooth_features, top_n_by_group
 
 ###
 # `fill_features`
