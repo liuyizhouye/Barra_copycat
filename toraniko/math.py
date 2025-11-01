@@ -1,22 +1,22 @@
-"""Basic mathematical and statistical operations used in the model."""
+"""模型中使用的数学和统计操作。"""
 
 import numpy as np
 import polars as pl
 
 
 def center_xsection(target_col: str, over_col: str, standardize: bool = False) -> pl.Expr:
-    """Cross-sectionally center (and optionally standardize) a Polars DataFrame `target_col` partitioned by `over_col`.
+    """按 `over_col` 分组对 `target_col` 列进行横截面去中心化（可选标准化）。
 
-    This returns a Polars expression, so it be chained in a `select` or `with_columns` invocation
-    without needing to set a new intermediate DataFrame or materialize lazy evaluation.
+    返回一个 Polars 表达式，因此可以在 `select` 或 `with_columns` 调用中链式使用，
+    无需设置新的中间 DataFrame 或物化延迟求值。
 
-    Parameters
+    参数
     ----------
-    target_col: the column to be standardized
-    over_col: the column over which standardization should be applied, cross-sectionally
-    standardize: boolean indicating if we should also standardize the target column
+    target_col: 要标准化的列名
+    over_col: 应应用标准化的分组列，进行横截面处理
+    standardize: 布尔值，指示是否也应标准化目标列
 
-    Returns
+    返回
     -------
     Polars Expr
     """
@@ -32,22 +32,21 @@ def norm_xsection(
     lower: int | float = 0,
     upper: int | float = 1,
 ) -> pl.Expr:
-    """Cross-sectionally normalize a Polars DataFrame `target_col` partitioned by `over_col`, with rescaling
-    to the interval [`lower`, `upper`].
+    """按 `over_col` 分组将 `target_col` 列进行横截面归一化，重缩放到区间 [`lower`, `upper`]。
 
-    This returns a Polars expression, so it can be chained in a `select` or `with_columns` invocation
-    without needing to set a new intermediate DataFrame or materialize lazy evaluation.
+    返回一个 Polars 表达式，因此可以在 `select` 或 `with_columns` 调用中链式使用，
+    无需设置新的中间 DataFrame 或物化延迟求值。
 
-    NaN values are not propagated in the max and min calculation, but NaN values are preserved for normalization.
+    NaN 值不会传播到最大值和最小值计算中，但 NaN 值会在归一化中保留。
 
-    Parameters
+    参数
     ----------
-    target_col: str name of the column to normalize
-    over_col: str name of the column to partition the normalization by
-    lower: lower bound of the rescaling interval, defaults to 0 to construct a percent
-    upper: upper bound of the rescaling interval, defaults to 1 to construct a percent
+    target_col: 要归一化的列名
+    over_col: 用于分组的列名
+    lower: 重缩放区间的下界，默认为 0 以构造百分比
+    upper: 重缩放区间的上界，默认为 1 以构造百分比
 
-    Returns
+    返回
     -------
     Polars Expr
     """
@@ -56,8 +55,8 @@ def norm_xsection(
 
     norm_col = (
         pl.when(pl.col(target_col).is_nan())
-        .then(pl.col(target_col))  # Preserve NaN values
-        .when(max_col != min_col)  # Avoid division by zero by making sure min != max
+        .then(pl.col(target_col))  # 保留 NaN 值
+        .when(max_col != min_col)  # 确保 min != max 以避免除零
         .then((pl.col(target_col) - min_col) / (max_col - min_col) * (upper - lower) + lower)
         .otherwise(lower)
     )
@@ -66,34 +65,33 @@ def norm_xsection(
 
 
 def winsorize(data: np.ndarray, percentile: float = 0.05, axis: int = 0) -> np.ndarray:
-    """Windorize each vector of a 2D numpy array to symmetric percentiles given by `percentile`.
+    """将 2D numpy 数组的每个向量按给定的 `percentile` 对称分位数进行去极值处理。
 
-    This returns a Polars expression, not a DataFrame, so it be chained (including lazily) in
-    a `select` or `with_columns` invocation without needing to set a new intermediate DataFrame variable.
+    返回一个 numpy 数组，不是 DataFrame。
 
-    Parameters
+    参数
     ----------
-    data: numpy array containing original data to be winsorized
-    percentile: float indicating the percentiles to apply winsorization at
-    axis: int indicating which axis to apply winsorization over (i.e. orientation if `dara` is 2D)
+    data: 要进行去极值处理的 numpy 数组
+    percentile: 浮点数，指示应用去极值的分位数
+    axis: 整数，指示应用去极值的轴（即如果数据是 2D 的方向）
 
-    Returns
+    返回
     -------
     numpy array
     """
     try:
         if not 0 <= percentile <= 1:
-            raise ValueError("`percentile` must be between 0 and 1")
+            raise ValueError("`percentile` 必须在 0 到 1 之间")
     except AttributeError as e:
-        raise TypeError("`percentile` must be a numeric type, such as an int or float") from e
+        raise TypeError("`percentile` 必须是数字类型，如 int 或 float") from e
 
     fin_data = np.where(np.isfinite(data), data, np.nan)
 
-    # compute lower and upper percentiles for each column
+    # 计算每列的下限和上限分位数
     lower_bounds = np.nanpercentile(fin_data, percentile * 100, axis=axis, keepdims=True)
     upper_bounds = np.nanpercentile(fin_data, (1 - percentile) * 100, axis=axis, keepdims=True)
 
-    # clip data to within the bounds
+    # 将数据裁剪到边界内
     return np.clip(data, lower_bounds, upper_bounds)
 
 
@@ -103,19 +101,19 @@ def winsorize_xsection(
     group_col: str,
     percentile: float = 0.05,
 ) -> pl.DataFrame | pl.LazyFrame:
-    """Cross-sectionally winsorize the `data_cols` of `df`, grouped on `group_col`, to the symmetric percentile
-    given by `percentile`.
+    """按 `group_col` 分组对 `df` 的 `data_cols` 列进行横截面去极值处理，
+    使用由 `percentile` 给定的对称分位数。
 
-    Parameters
+    参数
     ----------
-    df: Polars DataFrame or LazyFrame containing feature data to winsorize
-    data_cols: collection of strings indicating the columns of `df` to be winsorized
-    group_col: str column of `df` to use as the cross-sectional group
-    percentile: float value indicating the symmetric winsorization threshold
+    df: Polars DataFrame 或 LazyFrame，包含要去极值的特征数据
+    data_cols: 字符串集合，指示要接受去极值的列
+    group_col: `df` 的分组列，用作横截面分组
+    percentile: 浮点数，指示对称去极值阈值
 
-    Returns
+    返回
     -------
-    Polars DataFrame or LazyFrame
+    Polars DataFrame 或 LazyFrame
     """
 
     def winsorize_group(group: pl.DataFrame) -> pl.DataFrame:
@@ -130,7 +128,7 @@ def winsorize_xsection(
         case pl.LazyFrame():
             grouped = df.group_by(group_col).map_groups(winsorize_group, schema=df.collect_schema())
         case _:
-            raise TypeError("`df` must be a Polars DataFrame or LazyFrame")
+            raise TypeError("`df` 必须是 Polars DataFrame 或 LazyFrame")
     return grouped
 
 
@@ -141,22 +139,22 @@ def percentiles_xsection(
     upper_pct: float,
     fill_val: float | int = 0.0,
 ) -> pl.Expr:
-    """Cross-sectionally mark all values of `target_col` that fall outside the `lower_pct` percentile or
-    `upper_pct` percentile, within each `over_col` group. This is essentially an anti-winsorization, suitable for
-    building high - low portfolios. The `fill_val` is inserted to each value between the percentile cutoffs.
+    """横截面标记每个 `over_col` 分组中落在 `lower_pct` 或 `upper_pct` 分位数之外
+    的 `target_col` 的所有值。这本质上是一种反去极值处理，适用于构建做多-做空组合。
+    在分位数截断点之间的值用 `fill_val` 填充。
 
-    This returns a Polars expression, so it be chained in a `select` or `with_columns` invocation
-    without needing to set a new intermediate DataFrame or materialize lazy evaluation.
+    返回一个 Polars 表达式，因此可以在 `select` 或 `with_columns` 调用中链式使用，
+    无需设置新的中间 DataFrame 或物化延迟求值。
 
-    Parameters
+    参数
     ----------
-    target_col: str column name to have non-percentile thresholded values masked
-    over_col: str column name to apply masking over, cross-sectionally
-    lower_pct: float lower percentile under which to keep values
-    upper_pct: float upper percentile over which to keep values
-    fill_val: numeric value for masking
+    target_col: 列名，非分位数阈值内的值将被掩蔽
+    over_col: 列名，横截面应用掩蔽
+    lower_pct: 浮点数，要保留值的最低分位数
+    upper_pct: 浮点数，要保留值的最高分位数
+    fill_val: 用于掩蔽的数值
 
-    Returns
+    返回
     -------
     Polars Expr
     """
@@ -171,28 +169,28 @@ def percentiles_xsection(
 
 
 def exp_weights(window: int, half_life: int) -> np.ndarray:
-    """Generate exponentially decaying weights over `window` trailing values, decaying by half each `half_life` index.
+    """在 `window` 个滞后值上生成指数衰减权重，每 `half_life` 个索引权重减半。
 
-    Parameters
+    参数
     ----------
-    window: integer number of points in the trailing lookback period
-    half_life: integer decay rate
+    window: 滞后回看期中的点数
+    half_life: 整数，衰减率
 
-    Returns
+    返回
     -------
     numpy array
     """
     try:
         assert isinstance(window, int)
         if not window > 0:
-            raise ValueError("`window` must be a strictly positive integer")
+            raise ValueError("`window` 必须是严格正整数")
     except (AttributeError, AssertionError) as e:
-        raise TypeError("`window` must be an integer type") from e
+        raise TypeError("`window` 必须是整数类型") from e
     try:
         assert isinstance(half_life, int)
         if not half_life > 0:
-            raise ValueError("`half_life` must be a strictly positive integer")
+            raise ValueError("`half_life` 必须是严格正整数")
     except (AttributeError, AssertionError) as e:
-        raise TypeError("`half_life` must be an integer type") from e
+        raise TypeError("`half_life` 必须是整数类型") from e
     decay = np.log(2) / half_life
     return np.exp(-decay * np.arange(window))[::-1]

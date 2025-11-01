@@ -1,4 +1,4 @@
-"""Utility functions, primarily for data cleaning."""
+"""工具函数，主要用于数据清洗。"""
 
 import numpy as np
 import polars as pl
@@ -7,22 +7,22 @@ import polars as pl
 def fill_features(
     df: pl.DataFrame | pl.LazyFrame, features: tuple[str, ...], sort_col: str, over_col: str
 ) -> pl.LazyFrame:
-    """Cast feature columns to numeric (float), convert NaN and inf values to null, then forward fill nulls
-    for each column of `features`, sorted on `sort_col` and partitioned by `over_col`.
+    """将特征列转换为数值类型（float），将 NaN 和 inf 值转换为 null，
+    然后对 `features` 的每一列进行前向填充 null 值，按 `sort_col` 排序并按 `over_col` 分组。
 
-    Parameters
+    参数
     ----------
-    df: Polars DataFrame or LazyFrame containing columns `sort_col`, `over_col` and each of `features`
-    features: collection of strings indicating which columns of `df` are the feature values
-    sort_col: str column of `df` indicating how to sort
-    over_col: str column of `df` indicating how to partition
+    df: Polars DataFrame 或 LazyFrame，包含列 `sort_col`、`over_col` 和每个 `features`
+    features: 字符串集合，指示 `df` 中的哪些列是特征值
+    sort_col: `df` 的列，指示如何排序
+    over_col: `df` 的列，指示如何分组
 
-    Returns
+    返回
     -------
-    Polars LazyFrame containing the original columns with cleaned feature data
+    Polars LazyFrame，包含原始列和清洗后的特征数据
     """
     try:
-        # eagerly check all `features`, `sort_col`, `over_col` present: can't catch ColumNotFoundError in lazy context
+        # 急切检查所有 `features`、`sort_col`、`over_col` 是否存在：在延迟上下文中无法捕获 ColumnNotFoundError
         assert all(c in df.columns for c in features + (sort_col, over_col))
         return (
             df.lazy()
@@ -45,9 +45,9 @@ def fill_features(
             .with_columns([pl.col(f).forward_fill().over(over_col).alias(f) for f in features])
         )
     except AttributeError as e:
-        raise TypeError("`df` must be a Polars DataFrame | LazyFrame, but it's missing required attributes") from e
+        raise TypeError("`df` 必须是 Polars DataFrame 或 LazyFrame，但缺少必需属性") from e
     except AssertionError as e:
-        raise ValueError(f"`df` must have all of {[over_col, sort_col] + list(features)} as columns") from e
+        raise ValueError(f"`df` 必须包含以下所有列：{[over_col, sort_col] + list(features)}") from e
 
 
 def smooth_features(
@@ -57,23 +57,23 @@ def smooth_features(
     over_col: str,
     window_size: int,
 ) -> pl.LazyFrame:
-    """Smooth the `features` columns of `df` by taking the rolling mean of each, sorted over `sort_col` and
-    partitioned by `over_col`, using `window_size` trailing periods for the moving average window.
+    """通过计算每列的滚动均值来平滑 `df` 的 `features` 列，
+    按 `sort_col` 排序并按 `over_col` 分组，使用 `window_size` 个滞后周期作为移动平均窗口。
 
-    Parameters
+    参数
     ----------
-    df: Polars DataFrame | LazyFrame containing columns `sort_col`, `over_col` and each of `features`
-    features: collection of strings indicating which columns of `df` are the feature values
-    sort_col: str column of `df` indicating how to sort
-    over_col: str column of `df` indicating how to partition
-    window_size: int number of time periods for the moving average
+    df: Polars DataFrame 或 LazyFrame，包含列 `sort_col`、`over_col` 和每个 `features`
+    features: 字符串集合，指示 `df` 中的哪些列是特征值
+    sort_col: `df` 的列，指示如何排序
+    over_col: `df` 的列，指示如何分组
+    window_size: 整数，移动平均的时间周期数
 
-    Returns
+    返回
     -------
-    Polars LazyFrame containing the original columns, with each of `features` replaced with moving average
+    Polars LazyFrame，包含原始列，每个 `features` 替换为移动平均
     """
     try:
-        # eagerly check `over_col`, `sort_col`, `features` present: can't catch pl.ColumnNotFoundError in lazy context
+        # 急切检查 `over_col`、`sort_col`、`features` 是否存在：在延迟上下文中无法捕获 pl.ColumnNotFoundError
         assert all(c in df.columns for c in features + (over_col, sort_col))
         return (
             df.lazy()
@@ -81,9 +81,9 @@ def smooth_features(
             .with_columns([pl.col(f).rolling_mean(window_size=window_size).over(over_col).alias(f) for f in features])
         )
     except AttributeError as e:
-        raise TypeError("`df` must be a Polars DataFrame | LazyFrame, but it's missing required attributes") from e
+        raise TypeError("`df` 必须是 Polars DataFrame 或 LazyFrame，但缺少必需属性") from e
     except AssertionError as e:
-        raise ValueError(f"`df` must have all of {[over_col, sort_col] + list(features)} as columns") from e
+        raise ValueError(f"`df` 必须包含以下所有列：{[over_col, sort_col] + list(features)}") from e
 
 
 def top_n_by_group(
@@ -93,26 +93,25 @@ def top_n_by_group(
     group_var: tuple[str, ...],
     filter: bool = True,
 ) -> pl.LazyFrame:
-    """Mark the top `n` rows in each of `group_var` according to `rank_var` descending.
+    """根据 `rank_var` 降序标记每个 `group_var` 分组中的前 `n` 行。
 
-    If `filter` is True, the returned DataFrame contains only the filtered data. If `filter` is False,
-    the returned DataFrame has all data, with an additional 'rank_mask' column indicating if that row
-    is in the filter.
+    如果 `filter` 为 True，返回的 DataFrame 仅包含过滤后的数据。如果 `filter` 为 False，
+    返回的 DataFrame 包含所有数据，并附加一个 'rank_mask' 列指示该行是否在过滤器中。
 
-    Parameters
+    参数
     ----------
-    df: Polars DataFrame | LazyFrame
-    n: integer indicating the top rows to take in each group
-    rank_var: str column name to rank on
-    group_var: tuple of str column names to group and sort on
-    filter: boolean indicating how much data to return
+    df: Polars DataFrame 或 LazyFrame
+    n: 整数，指示每个组中要取的前几行
+    rank_var: 排名依据的列名
+    group_var: 用于分组和排序的列名元组
+    filter: 布尔值，指示返回多少数据
 
-    Returns
+    返回
     -------
-    Polars LazyFrame containing original columns and optional filter column
+    Polars LazyFrame，包含原始列和可选的过滤器列
     """
     try:
-        # eagerly check `rank_var`, `group_var` are present: we can't catch a ColumnNotFoundError in a lazy context
+        # 急切检查 `rank_var`、`group_var` 是否存在：在延迟上下文中无法捕获 ColumnNotFoundError
         assert all(c in df.columns for c in (rank_var,) + group_var)
         rdf = (
             df.lazy()
@@ -131,6 +130,6 @@ def top_n_by_group(
                     .sort(by=list(group_var) + [rank_var])
                 )
     except AssertionError as e:
-        raise ValueError(f"`df` is missing one or more required columns: '{rank_var}' and '{group_var}'") from e
+        raise ValueError(f"`df` 缺少一个或多个必需列：'{rank_var}' 和 '{group_var}'") from e
     except AttributeError as e:
-        raise TypeError("`df` must be a Polars DataFrame or LazyFrame but is missing a required attribute") from e
+        raise TypeError("`df` 必须是 Polars DataFrame 或 LazyFrame，但缺少必需属性") from e
