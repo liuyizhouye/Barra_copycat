@@ -9,9 +9,9 @@ from cne5.cne5_factors._utils import standardize_cne5
 
 
 def factor_momentum_cne5(
-    returns_df: pl.DataFrame | pl.LazyFrame,
-    mkt_cap_df: pl.DataFrame | pl.LazyFrame,
-    risk_free_df: pl.DataFrame | pl.LazyFrame | None = None,
+    returns_df: Union[pl.DataFrame, pl.LazyFrame],
+    mkt_cap_df: Union[pl.DataFrame, pl.LazyFrame],
+    risk_free_df: Optional[Union[pl.DataFrame, pl.LazyFrame]] = None,
     lag: int = 21,
     trailing_days: int = 504,
     half_life: int = 126,

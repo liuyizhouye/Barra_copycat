@@ -1,5 +1,7 @@
 """CNE5 Growth 因子: 0.18·EGRLF + 0.11·EGRSF + 0.24·EGRO + 0.47·SGRO。"""
 
+from typing import Union
+
 import polars as pl
 import polars.exceptions as pl_exc
 
@@ -7,8 +9,8 @@ from cne5.cne5_factors._utils import standardize_cne5
 
 
 def factor_growth_cne5(
-    growth_df: pl.DataFrame | pl.LazyFrame,
-    mkt_cap_df: pl.DataFrame | pl.LazyFrame,
+    growth_df: Union[pl.DataFrame, pl.LazyFrame],
+    mkt_cap_df: Union[pl.DataFrame, pl.LazyFrame],
     egrlf_col: str = "egrlf",
     egrsf_col: str = "egrsf",
     egro_col: str = "egro",

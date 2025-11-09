@@ -3,12 +3,14 @@
 共享的标准化和正交化函数。
 """
 
+from typing import Union, List
+
 import numpy as np
 import polars as pl
 
 
 def standardize_cne5(
-    df: pl.DataFrame | pl.LazyFrame,
+    df: Union[pl.DataFrame, pl.LazyFrame],
     factor_col: str,
     mkt_cap_col: str,
     date_col: str = "date",
@@ -55,9 +57,9 @@ def standardize_cne5(
 
 
 def orthogonalize_factor(
-    df: pl.DataFrame | pl.LazyFrame,
+    df: Union[pl.DataFrame, pl.LazyFrame],
     target_col: str,
-    orthogonal_to_cols: list[str],
+    orthogonal_to_cols: List[str],
     mkt_cap_col: str,
     date_col: str = "date",
 ) -> pl.LazyFrame:

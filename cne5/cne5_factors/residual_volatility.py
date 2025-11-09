@@ -1,5 +1,7 @@
 """CNE5 Residual Volatility 因子: 0.74·DASTD + 0.16·CMRA + 0.10·HSIGMA。"""
 
+from typing import Union, Optional
+
 import numpy as np
 import polars as pl
 import polars.exceptions as pl_exc
@@ -9,11 +11,11 @@ from cne5.cne5_factors._utils import standardize_cne5, orthogonalize_factor
 
 
 def factor_residual_volatility_cne5(
-    returns_df: pl.DataFrame | pl.LazyFrame,
-    mkt_cap_df: pl.DataFrame | pl.LazyFrame,
-    beta_df: pl.DataFrame | pl.LazyFrame,
-    size_df: pl.DataFrame | pl.LazyFrame,
-    risk_free_df: pl.DataFrame | pl.LazyFrame | None = None,
+    returns_df: Union[pl.DataFrame, pl.LazyFrame],
+    mkt_cap_df: Union[pl.DataFrame, pl.LazyFrame],
+    beta_df: Union[pl.DataFrame, pl.LazyFrame],
+    size_df: Union[pl.DataFrame, pl.LazyFrame],
+    risk_free_df: Optional[Union[pl.DataFrame, pl.LazyFrame]] = None,
     dastd_window: int = 252,
     dastd_half_life: int = 42,
     cmra_months: int = 12,

@@ -1,5 +1,7 @@
 """CNE5 Earnings Yield 因子: 0.68·EPFWD + 0.21·CETOP + 0.11·ETOP。"""
 
+from typing import Union
+
 import polars as pl
 import polars.exceptions as pl_exc
 
@@ -7,8 +9,8 @@ from cne5.cne5_factors._utils import standardize_cne5
 
 
 def factor_earnings_yield_cne5(
-    earnings_df: pl.DataFrame | pl.LazyFrame,
-    mkt_cap_df: pl.DataFrame | pl.LazyFrame,
+    earnings_df: Union[pl.DataFrame, pl.LazyFrame],
+    mkt_cap_df: Union[pl.DataFrame, pl.LazyFrame],
     epfwd_col: str = "epfwd",
     cetop_col: str = "cetop",
     etop_col: str = "etop",

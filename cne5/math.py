@@ -1,5 +1,7 @@
 """模型中使用的数学和统计操作。"""
 
+from typing import Union, Optional, Tuple
+
 import numpy as np
 import polars as pl
 
@@ -29,8 +31,8 @@ def center_xsection(target_col: str, over_col: str, standardize: bool = False) -
 def norm_xsection(
     target_col: str,
     over_col: str,
-    lower: int | float = 0,
-    upper: int | float = 1,
+    lower: Union[int, float] = 0,
+    upper: Union[int, float] = 1,
 ) -> pl.Expr:
     """按 `over_col` 分组将 `target_col` 列进行横截面归一化，重缩放到区间 [`lower`, `upper`]。
 
@@ -96,11 +98,11 @@ def winsorize(data: np.ndarray, percentile: float = 0.05, axis: int = 0) -> np.n
 
 
 def winsorize_xsection(
-    df: pl.DataFrame | pl.LazyFrame,
-    data_cols: tuple[str, ...],
+    df: Union[pl.DataFrame, pl.LazyFrame],
+    data_cols: Tuple[str, ...],
     group_col: str,
     percentile: float = 0.05,
-) -> pl.DataFrame | pl.LazyFrame:
+) -> Union[pl.DataFrame, pl.LazyFrame]:
     """按 `group_col` 分组对 `df` 的 `data_cols` 列进行横截面去极值处理，
     使用由 `percentile` 给定的对称分位数。
 
@@ -122,13 +124,12 @@ def winsorize_xsection(
             group = group.with_columns(pl.Series(col, winsorized_data).alias(col))
         return group
 
-    match df:
-        case pl.DataFrame():
-            grouped = df.group_by(group_col).map_groups(winsorize_group)
-        case pl.LazyFrame():
-            grouped = df.group_by(group_col).map_groups(winsorize_group, schema=df.collect_schema())
-        case _:
-            raise TypeError("`df` 必须是 Polars DataFrame 或 LazyFrame")
+    if isinstance(df, pl.DataFrame):
+        grouped = df.group_by(group_col).map_groups(winsorize_group)
+    elif isinstance(df, pl.LazyFrame):
+        grouped = df.group_by(group_col).map_groups(winsorize_group, schema=df.collect_schema())
+    else:
+        raise TypeError("`df` 必须是 Polars DataFrame 或 LazyFrame")
     return grouped
 
 
@@ -137,7 +138,7 @@ def percentiles_xsection(
     over_col: str,
     lower_pct: float,
     upper_pct: float,
-    fill_val: float | int = 0.0,
+    fill_val: Union[float, int] = 0.0,
 ) -> pl.Expr:
     """横截面标记每个 `over_col` 分组中落在 `lower_pct` 或 `upper_pct` 分位数之外
     的 `target_col` 的所有值。这本质上是一种反去极值处理，适用于构建做多-做空组合。

@@ -12,6 +12,8 @@
 - VIF（方差膨胀因子）
 """
 
+from typing import Union, Optional
+
 import numpy as np
 import polars as pl
 
@@ -43,15 +45,15 @@ from cne5.cne5_risk import (
 
 
 def build_cne5_style_factors(
-    returns_df: pl.DataFrame | pl.LazyFrame,
-    mkt_cap_df: pl.DataFrame | pl.LazyFrame,
-    risk_free_df: pl.DataFrame | pl.LazyFrame | None = None,
+    returns_df: Union[pl.DataFrame, pl.LazyFrame],
+    mkt_cap_df: Union[pl.DataFrame, pl.LazyFrame],
+    risk_free_df: Optional[Union[pl.DataFrame, pl.LazyFrame]] = None,
     # 基本面数据（可选）
-    book_value_df: pl.DataFrame | pl.LazyFrame | None = None,
-    turnover_df: pl.DataFrame | pl.LazyFrame | None = None,
-    earnings_df: pl.DataFrame | pl.LazyFrame | None = None,
-    growth_df: pl.DataFrame | pl.LazyFrame | None = None,
-    leverage_df: pl.DataFrame | pl.LazyFrame | None = None,
+    book_value_df: Optional[Union[pl.DataFrame, pl.LazyFrame]] = None,
+    turnover_df: Optional[Union[pl.DataFrame, pl.LazyFrame]] = None,
+    earnings_df: Optional[Union[pl.DataFrame, pl.LazyFrame]] = None,
+    growth_df: Optional[Union[pl.DataFrame, pl.LazyFrame]] = None,
+    leverage_df: Optional[Union[pl.DataFrame, pl.LazyFrame]] = None,
 ) -> pl.LazyFrame:
     """构建所有 CNE5 风格因子。
 
@@ -128,9 +130,9 @@ def estimate_cne5_factor_returns(
     mkt_cap_df: pl.DataFrame,
     sector_df: pl.DataFrame,
     style_df: pl.DataFrame,
-    winsor_factor: float | None = 0.05,
+    winsor_factor: Optional[float] = 0.05,
     residualize_styles: bool = True,
-) -> tuple[pl.DataFrame, pl.DataFrame]:
+) -> tuple:
     """估计 CNE5 因子收益（国家、行业、风格）。
 
     注意：在 CNE5 模型中，"市场"因子实际上就是"国家"因子（Country factor），
@@ -170,16 +172,16 @@ def build_cne5_model(
     returns_df: pl.DataFrame,
     mkt_cap_df: pl.DataFrame,
     sector_df: pl.DataFrame,
-    risk_free_df: pl.DataFrame | None = None,
+    risk_free_df: Optional[pl.DataFrame] = None,
     # 基本面数据（可选）
-    book_value_df: pl.DataFrame | None = None,
-    turnover_df: pl.DataFrame | None = None,
-    earnings_df: pl.DataFrame | None = None,
-    growth_df: pl.DataFrame | None = None,
-    leverage_df: pl.DataFrame | None = None,
-    winsor_factor: float | None = 0.05,
+    book_value_df: Optional[pl.DataFrame] = None,
+    turnover_df: Optional[pl.DataFrame] = None,
+    earnings_df: Optional[pl.DataFrame] = None,
+    growth_df: Optional[pl.DataFrame] = None,
+    leverage_df: Optional[pl.DataFrame] = None,
+    winsor_factor: Optional[float] = 0.05,
     residualize_styles: bool = True,
-) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
+) -> tuple:
     """构建完整的 CNE5 模型：风格因子 + 因子收益估计。
 
     参数
@@ -233,11 +235,11 @@ def build_cne5_risk_model(
     apply_vra: bool = True,
     apply_bayesian_shrinkage: bool = True,
     cov_window: int = 252,
-    cov_half_life: int | None = 63,
+    cov_half_life: Optional[int] = 63,
     specific_risk_window: int = 252,
     specific_risk_half_life: int = 63,
     n_oba_simulations: int = 1000,
-) -> tuple[np.ndarray, pl.DataFrame, dict]:
+) -> tuple:
     """构建完整的 CNE5 风险模型。
 
     参数
@@ -334,22 +336,22 @@ def build_complete_cne5_model(
     returns_df: pl.DataFrame,
     mkt_cap_df: pl.DataFrame,
     sector_df: pl.DataFrame,
-    risk_free_df: pl.DataFrame | None = None,
+    risk_free_df: Optional[pl.DataFrame] = None,
     # 基本面数据（可选）
-    book_value_df: pl.DataFrame | None = None,
-    turnover_df: pl.DataFrame | None = None,
-    earnings_df: pl.DataFrame | None = None,
-    growth_df: pl.DataFrame | None = None,
-    leverage_df: pl.DataFrame | None = None,
+    book_value_df: Optional[pl.DataFrame] = None,
+    turnover_df: Optional[pl.DataFrame] = None,
+    earnings_df: Optional[pl.DataFrame] = None,
+    growth_df: Optional[pl.DataFrame] = None,
+    leverage_df: Optional[pl.DataFrame] = None,
     # 因子收益估计参数
-    winsor_factor: float | None = 0.05,
+    winsor_factor: Optional[float] = 0.05,
     residualize_styles: bool = True,
     # 风险模型参数
     apply_oba: bool = True,
     apply_vra: bool = True,
     apply_bayesian_shrinkage: bool = True,
     cov_window: int = 252,
-    cov_half_life: int | None = 63,
+    cov_half_life: Optional[int] = 63,
     specific_risk_window: int = 252,
     specific_risk_half_life: int = 63,
 ) -> dict:

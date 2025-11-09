@@ -1,5 +1,7 @@
 """CNE5 Non-linear Size 因子: Size 的立方，相对 Size 回归加权正交化。"""
 
+from typing import Union
+
 import polars as pl
 import polars.exceptions as pl_exc
 
@@ -8,8 +10,8 @@ from cne5.cne5_factors._utils import standardize_cne5, orthogonalize_factor
 
 
 def factor_nonlinear_size_cne5(
-    size_df: pl.DataFrame | pl.LazyFrame,
-    mkt_cap_df: pl.DataFrame | pl.LazyFrame,
+    size_df: Union[pl.DataFrame, pl.LazyFrame],
+    mkt_cap_df: Union[pl.DataFrame, pl.LazyFrame],
 ) -> pl.LazyFrame:
     """CNE5 Non-linear Size 因子: Size 的立方，相对 Size 回归加权正交化。
 

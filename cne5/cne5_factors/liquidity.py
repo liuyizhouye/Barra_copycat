@@ -1,5 +1,7 @@
 """CNE5 Liquidity 因子: 0.35·STOM + 0.35·STOQ + 0.30·STOA。"""
 
+from typing import Union
+
 import polars as pl
 import polars.exceptions as pl_exc
 
@@ -7,9 +9,9 @@ from cne5.cne5_factors._utils import standardize_cne5, orthogonalize_factor
 
 
 def factor_liquidity_cne5(
-    turnover_df: pl.DataFrame | pl.LazyFrame,
-    mkt_cap_df: pl.DataFrame | pl.LazyFrame,
-    size_df: pl.DataFrame | pl.LazyFrame,
+    turnover_df: Union[pl.DataFrame, pl.LazyFrame],
+    mkt_cap_df: Union[pl.DataFrame, pl.LazyFrame],
+    size_df: Union[pl.DataFrame, pl.LazyFrame],
     turnover_col: str = "turnover",
 ) -> pl.LazyFrame:
     """CNE5 Liquidity 因子: 0.35·STOM + 0.35·STOQ + 0.30·STOA。

@@ -1,5 +1,7 @@
 """CNE5 Beta 因子: 对超额收益做时间序列回归。"""
 
+from typing import Union, Optional
+
 import numpy as np
 import polars as pl
 import polars.exceptions as pl_exc
@@ -9,9 +11,9 @@ from cne5.cne5_factors._utils import standardize_cne5
 
 
 def factor_beta_cne5(
-    returns_df: pl.DataFrame | pl.LazyFrame,
-    mkt_cap_df: pl.DataFrame | pl.LazyFrame,
-    risk_free_df: pl.DataFrame | pl.LazyFrame | None = None,
+    returns_df: Union[pl.DataFrame, pl.LazyFrame],
+    mkt_cap_df: Union[pl.DataFrame, pl.LazyFrame],
+    risk_free_df: Optional[Union[pl.DataFrame, pl.LazyFrame]] = None,
     window: int = 252,
     half_life: int = 63,
 ) -> pl.LazyFrame:

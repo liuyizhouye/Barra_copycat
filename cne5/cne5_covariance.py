@@ -6,9 +6,10 @@
 - 波动体制调整（VRA）
 """
 
+from typing import Literal, Optional, Dict, Tuple
+
 import numpy as np
 import polars as pl
-from typing import Literal
 
 from cne5.math import exp_weights
 
@@ -16,7 +17,7 @@ from cne5.math import exp_weights
 def estimate_factor_covariance(
     factor_returns_df: pl.DataFrame,
     window: int = 252,
-    half_life: int | None = None,
+    half_life: Optional[int] = None,
     method: Literal["sample", "ewma"] = "ewma",
 ) -> np.ndarray:
     """估计因子协方差矩阵。
@@ -139,10 +140,10 @@ def volatility_regime_adjustment(
     factor_returns_df: pl.DataFrame,
     residual_returns_df: pl.DataFrame,
     factor_cov: np.ndarray,
-    specific_risks: dict[str, float],
+    specific_risks: Dict[str, float],
     window: int = 60,
     half_life: int = 20,
-) -> tuple[np.ndarray, dict[str, float]]:
+) -> Tuple[np.ndarray, Dict[str, float]]:
     """波动体制调整（VRA）。
 
     基于截面偏差统计量调整因子波动和特异风险。

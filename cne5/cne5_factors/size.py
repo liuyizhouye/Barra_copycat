@@ -1,5 +1,7 @@
 """CNE5 Size 因子: LNCAP (市值自然对数)。"""
 
+from typing import Union
+
 import polars as pl
 import polars.exceptions as pl_exc
 
@@ -7,7 +9,7 @@ from cne5.cne5_factors._utils import standardize_cne5
 
 
 def factor_size_cne5(
-    mkt_cap_df: pl.DataFrame | pl.LazyFrame,
+    mkt_cap_df: Union[pl.DataFrame, pl.LazyFrame],
     mkt_cap_col: str = "market_cap",
 ) -> pl.LazyFrame:
     """CNE5 Size 因子: LNCAP (市值自然对数)。

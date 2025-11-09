@@ -1,5 +1,7 @@
 """CNE5 Leverage 因子: 0.38·MLEV + 0.35·DTOA + 0.27·BLEV。"""
 
+from typing import Union
+
 import polars as pl
 import polars.exceptions as pl_exc
 
@@ -7,8 +9,8 @@ from cne5.cne5_factors._utils import standardize_cne5
 
 
 def factor_leverage_cne5(
-    leverage_df: pl.DataFrame | pl.LazyFrame,
-    mkt_cap_df: pl.DataFrame | pl.LazyFrame,
+    leverage_df: Union[pl.DataFrame, pl.LazyFrame],
+    mkt_cap_df: Union[pl.DataFrame, pl.LazyFrame],
     mlev_col: str = "mlev",
     dtoa_col: str = "dtoa",
     blev_col: str = "blev",

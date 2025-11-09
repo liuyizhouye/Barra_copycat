@@ -6,6 +6,8 @@
 - 稳定性与共线性诊断
 """
 
+from typing import Optional
+
 import numpy as np
 import polars as pl
 
@@ -220,7 +222,7 @@ def calculate_r_squared(
 
 def calculate_factor_correlation(
     style_df: pl.DataFrame,
-    sector_df: pl.DataFrame | None = None,
+    sector_df: Optional[pl.DataFrame] = None,
 ) -> pl.DataFrame:
     """计算因子暴露的截面相关系数，用于稳定性与共线性诊断。
 

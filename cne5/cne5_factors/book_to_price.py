@@ -1,5 +1,7 @@
 """CNE5 Book-to-Price 因子: 最新账面普通股权益 / 当前市值。"""
 
+from typing import Union
+
 import polars as pl
 import polars.exceptions as pl_exc
 
@@ -7,8 +9,8 @@ from cne5.cne5_factors._utils import standardize_cne5
 
 
 def factor_book_to_price_cne5(
-    book_value_df: pl.DataFrame | pl.LazyFrame,
-    mkt_cap_df: pl.DataFrame | pl.LazyFrame,
+    book_value_df: Union[pl.DataFrame, pl.LazyFrame],
+    mkt_cap_df: Union[pl.DataFrame, pl.LazyFrame],
     book_value_col: str = "book_value",
 ) -> pl.LazyFrame:
     """CNE5 Book-to-Price 因子: 最新账面普通股权益 / 当前市值。

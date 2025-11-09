@@ -1,5 +1,7 @@
 """因子模型完整实现。"""
 
+from typing import Union, Optional, Tuple
+
 import numpy as np
 import polars as pl
 import polars.exceptions as pl_exc
@@ -13,7 +15,7 @@ def _factor_returns(
     sector_scores: np.ndarray,
     style_scores: np.ndarray,
     residualize_styles: bool,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """估计单个时间点的市场因子、行业因子、风格因子和残差收益，对秩缺陷稳健。
 
     参数
@@ -71,9 +73,9 @@ def estimate_factor_returns(
     mkt_cap_df: pl.DataFrame,
     sector_df: pl.DataFrame,
     style_df: pl.DataFrame,
-    winsor_factor: float | None = 0.05,
+    winsor_factor: Optional[float] = 0.05,
     residualize_styles: bool = True,
-) -> tuple[pl.DataFrame, pl.DataFrame] | pl.DataFrame:
+) -> Union[Tuple[pl.DataFrame, pl.DataFrame], pl.DataFrame]:
     """使用输入的资产因子得分估计所有时间段的因子收益和残差收益。
 
     参数

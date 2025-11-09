@@ -5,6 +5,8 @@
 - 贝叶斯收缩
 """
 
+from typing import Optional
+
 import numpy as np
 import polars as pl
 
@@ -302,7 +304,7 @@ def calculate_style_stability(
 def calculate_vif(
     style_df: pl.DataFrame,
     sector_df: pl.DataFrame,
-    date: str | None = None,
+    date: Optional[str] = None,
 ) -> pl.DataFrame:
     """计算方差膨胀因子（VIF），衡量因子间共线性。
 

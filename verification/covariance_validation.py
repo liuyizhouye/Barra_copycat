@@ -5,6 +5,8 @@
 - Volatility Regime Adjustment (VRA) 验证
 """
 
+from typing import Optional
+
 import numpy as np
 import polars as pl
 
@@ -19,7 +21,7 @@ def validate_oba_effectiveness(
     factor_returns_df: pl.DataFrame,
     n_assets: int,
     window: int = 252,
-    half_life: int | None = 63,
+    half_life: Optional[int] = 63,
     n_simulations: int = 1000,
 ) -> dict:
     """验证 OBA (Optimization Bias Adjustment) 的有效性。
@@ -183,7 +185,7 @@ def calculate_all_covariance_validations(
     factor_cov: np.ndarray,
     n_assets: int,
     window: int = 252,
-    half_life: int | None = 63,
+    half_life: Optional[int] = 63,
 ) -> dict:
     """计算所有协方差矩阵验证指标。
 
