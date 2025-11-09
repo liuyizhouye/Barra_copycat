@@ -4,7 +4,7 @@ Barra Copycat 是一个机构级多因子股权风险模型，用于量化交易
 
 ![mom_factor](https://github.com/user-attachments/assets/f9d2927c-e899-4fd6-944c-8f9a104b410f)
 
-核心依赖：**numpy**（数值计算）和 **polars**（高性能数据处理）。支持市场、行业和风格因子；内置价值、规模和动量；并提供通用的数学与数据清洗工具函数。
+核心依赖：**numpy**（数值计算）和 **polars**（高性能数据处理）。实现完整的 Barra CNE5 多因子风险模型，包括10个风格因子、因子收益估计、协方差矩阵和特异风险模型。
 
 ## 安装
 
@@ -22,23 +22,347 @@ pip install Barra-copycat
 
 ```
 barra_copycat/
-├── __init__.py          # 空文件，标识为Python包
-├── model.py             # 核心模型：因子收益估计
-├── styles.py            # 风格因子构建
-├── math.py              # 数学和统计工具
-├── utils.py             # 数据清洗工具
-└── tests/               # 测试文件
-    ├── test_model.py    # 测试 model.py
-    ├── test_math.py     # 测试 math.py
-    └── test_utils.py    # 测试 utils.py
+├── __init__.py              # 包初始化文件
+├── cne5.py                  # CNE5 模型主模块（入口）
+├── cne5_covariance.py       # 因子协方差矩阵（OBA、VRA）
+├── cne5_risk.py            # 特异风险模型（贝叶斯收缩、RMS分解等）
+├── cne5_factors/           # CNE5 风格因子（每个因子独立文件）
+│   ├── __init__.py         # 导出所有因子函数
+│   ├── _utils.py           # 共享工具函数（标准化、正交化）
+│   ├── size.py             # Size 因子
+│   ├── beta.py             # Beta 因子
+│   ├── momentum.py         # Momentum 因子
+│   ├── residual_volatility.py  # Residual Volatility 因子
+│   ├── nonlinear_size.py   # Non-linear Size 因子
+│   ├── book_to_price.py    # Book-to-Price 因子
+│   ├── liquidity.py       # Liquidity 因子
+│   ├── earnings_yield.py  # Earnings Yield 因子
+│   ├── growth.py          # Growth 因子
+│   └── leverage.py        # Leverage 因子
+├── model.py                 # 核心模型：因子收益估计
+└── math.py                  # 数学和统计工具
 ```
 
 ### 核心功能
 
-1. **构建风格因子**：动量(Momentum)、价值(Value)、规模(Size)
-2. **估计因子收益**：市场、行业、风格
-3. **计算残差收益**：用于风险分解
-4. **支持组合优化**：提供因子协方差矩阵的计算基础
+1. **CNE5 风格因子构建**：10个CNE5标准风格因子
+2. **因子收益估计**：国家、行业、风格因子收益
+3. **因子协方差矩阵**：支持 OBA 和 VRA 调整
+4. **特异风险模型**：日频序列法 + 贝叶斯收缩
+5. **诊断工具**：RMS分解、风格稳定性、VIF
+
+---
+
+## 文件详细说明与依赖关系
+
+### 核心模块依赖关系图
+
+```
+用户代码
+    ↓
+cne5.py (主入口)
+    ├──→ cne5_factors/ (10个风格因子)
+    │       ├──→ _utils.py (标准化、正交化)
+    │       └──→ math.py (exp_weights, winsorize_xsection等)
+    ├──→ model.py (因子收益估计)
+    │       └──→ math.py (winsorize)
+    ├──→ cne5_covariance.py (协方差矩阵)
+    │       └──→ math.py (exp_weights)
+    └──→ cne5_risk.py (特异风险)
+            └──→ math.py (exp_weights)
+```
+
+### 各文件详细说明
+
+#### 1. `cne5.py` - CNE5 模型主入口
+
+**作用**：整合 CNE5 模型的所有功能，提供高级接口。
+
+**主要函数**：
+- `build_cne5_style_factors()`: 构建所有10个风格因子
+- `estimate_cne5_factor_returns()`: 估计因子收益（国家、行业、风格）
+- `build_cne5_risk_model()`: 构建完整风险模型
+- `build_complete_cne5_model()`: 一键构建完整 CNE5 模型
+
+**依赖关系**：
+- 导入 `cne5_factors/` 中的所有因子函数
+- 导入 `model.py` 的 `estimate_factor_returns()`
+- 导入 `cne5_covariance.py` 的协方差相关函数
+- 导入 `cne5_risk.py` 的风险相关函数
+
+**使用场景**：用户主要使用的模块，通过此模块访问所有 CNE5 功能。
+
+---
+
+#### 2. `cne5_factors/` - CNE5 风格因子模块
+
+**作用**：实现 CNE5 模型的10个风格因子，每个因子独立文件。
+
+##### 2.1 `_utils.py` - 共享工具函数
+
+**作用**：提供 CNE5 因子构建的共享工具函数。
+
+**主要函数**：
+- `standardize_cne5()`: CNE5 标准化（市值加权均值=0，等权标准差=1）
+- `orthogonalize_factor()`: 回归加权正交化
+
+**依赖关系**：
+- 不依赖其他模块（使用 Polars 和 NumPy 原生功能）
+
+**被依赖**：所有因子文件都使用此模块的标准化和正交化函数。
+
+##### 2.2 `size.py` - Size 因子
+
+**作用**：计算 Size 因子（市值对数）。
+
+**依赖关系**：
+- 导入 `_utils.py` 的 `standardize_cne5`
+
+##### 2.3 `beta.py` - Beta 因子
+
+**作用**：计算 Beta 因子（市场 Beta）。
+
+**依赖关系**：
+- 导入 `_utils.py` 的 `standardize_cne5`
+- 导入 `math.py` 的 `exp_weights`（用于 EWMA）
+
+##### 2.4 `momentum.py` - Momentum 因子
+
+**作用**：计算 Momentum 因子（动量）。
+
+**依赖关系**：
+- 导入 `_utils.py` 的 `standardize_cne5`
+- 导入 `math.py` 的 `exp_weights`
+
+##### 2.5 `residual_volatility.py` - Residual Volatility 因子
+
+**作用**：计算 Residual Volatility 因子（残差波动率）。
+
+**依赖关系**：
+- 导入 `_utils.py` 的 `standardize_cne5`, `orthogonalize_factor`
+- 导入 `math.py` 的 `exp_weights`
+- 依赖 `beta.py` 和 `size.py` 的输出（通过参数传入）
+
+##### 2.6 `nonlinear_size.py` - Non-linear Size 因子
+
+**作用**：计算 Non-linear Size 因子（Size 的立方）。
+
+**依赖关系**：
+- 导入 `_utils.py` 的 `standardize_cne5`, `orthogonalize_factor`
+- 导入 `math.py` 的 `winsorize_xsection`
+- 依赖 `size.py` 的输出（通过参数传入）
+
+##### 2.7 `book_to_price.py` - Book-to-Price 因子
+
+**作用**：计算 Book-to-Price 因子（账面价值/市值）。
+
+**依赖关系**：
+- 导入 `_utils.py` 的 `standardize_cne5`
+
+##### 2.8 `liquidity.py` - Liquidity 因子
+
+**作用**：计算 Liquidity 因子（流动性）。
+
+**依赖关系**：
+- 导入 `_utils.py` 的 `standardize_cne5`, `orthogonalize_factor`
+- 依赖 `size.py` 的输出（通过参数传入）
+
+##### 2.9 `earnings_yield.py` - Earnings Yield 因子
+
+**作用**：计算 Earnings Yield 因子（盈利收益率）。
+
+**依赖关系**：
+- 导入 `_utils.py` 的 `standardize_cne5`
+
+##### 2.10 `growth.py` - Growth 因子
+
+**作用**：计算 Growth 因子（成长性）。
+
+**依赖关系**：
+- 导入 `_utils.py` 的 `standardize_cne5`
+
+##### 2.11 `leverage.py` - Leverage 因子
+
+**作用**：计算 Leverage 因子（杠杆率）。
+
+**依赖关系**：
+- 导入 `_utils.py` 的 `standardize_cne5`
+
+##### 2.12 `__init__.py` - 因子模块导出
+
+**作用**：统一导出所有因子函数，方便 `cne5.py` 导入。
+
+**依赖关系**：
+- 导入所有因子文件中的函数
+
+---
+
+#### 3. `model.py` - 因子收益估计核心模块
+
+**作用**：实现因子收益估计的核心算法（加权最小二乘法）。
+
+**主要函数**：
+- `_factor_returns()`: 单期因子收益估计（市场、行业、风格）
+- `estimate_factor_returns()`: 多期因子收益估计
+
+**核心算法**：
+- 使用市值平方根作为权重矩阵
+- 行业因子收益约束：所有行业因子收益之和为0
+- 风格因子可选正交化到市场+行业
+
+**依赖关系**：
+- 导入 `math.py` 的 `winsorize`
+
+**被依赖**：
+- `cne5.py` 的 `estimate_cne5_factor_returns()` 调用此模块
+
+**数据流**：
+```
+returns_df + mkt_cap_df + sector_df + style_df
+    ↓
+estimate_factor_returns()
+    ↓
+factor_returns_df (因子收益) + residual_returns_df (残差收益)
+```
+
+---
+
+#### 4. `cne5_covariance.py` - 因子协方差矩阵模块
+
+**作用**：实现因子协方差矩阵的估计和调整。
+
+**主要函数**：
+- `estimate_factor_covariance()`: 估计因子协方差矩阵（支持样本协方差和 EWMA）
+- `optimization_bias_adjustment()`: 优化偏差调整（OBA）
+- `volatility_regime_adjustment()`: 波动体制调整（VRA）
+
+**依赖关系**：
+- 导入 `math.py` 的 `exp_weights`（用于 EWMA 协方差）
+
+**被依赖**：
+- `cne5.py` 的 `build_cne5_risk_model()` 调用此模块
+
+**数据流**：
+```
+factor_returns_df
+    ↓
+estimate_factor_covariance()
+    ↓
+factor_cov (因子协方差矩阵)
+    ↓
+optimization_bias_adjustment() (可选)
+    ↓
+volatility_regime_adjustment() (可选)
+    ↓
+adjusted_factor_cov (调整后的协方差矩阵)
+```
+
+---
+
+#### 5. `cne5_risk.py` - 特异风险模型模块
+
+**作用**：实现特异风险（idiosyncratic risk）的估计和诊断工具。
+
+**主要函数**：
+- `estimate_specific_risk_ts()`: 日频序列法估计特异风险
+- `bayesian_shrinkage()`: 贝叶斯收缩（按市值分位收缩）
+- `calculate_rms_decomposition()`: RMS 分解（x-sigma-rho 分解）
+- `calculate_style_stability()`: 风格稳定性系数
+- `calculate_vif()`: 方差膨胀因子（VIF）
+
+**依赖关系**：
+- 导入 `math.py` 的 `exp_weights`（用于 EWMA 特异风险估计）
+
+**被依赖**：
+- `cne5.py` 的 `build_cne5_risk_model()` 调用此模块
+
+**数据流**：
+```
+residual_returns_df
+    ↓
+estimate_specific_risk_ts()
+    ↓
+specific_risk_df (原始特异风险)
+    ↓
+bayesian_shrinkage() (可选)
+    ↓
+specific_risk_shrunk_df (收缩后的特异风险)
+```
+
+---
+
+#### 6. `math.py` - 数学和统计工具模块
+
+**作用**：提供通用的数学和统计工具函数。
+
+**主要函数**：
+- `exp_weights()`: 生成指数衰减权重（用于 EWMA）
+- `winsorize()` / `winsorize_xsection()`: 去极值处理
+- `center_xsection()`: 横截面去中心化/标准化
+- `percentiles_xsection()`: 分位数截断
+- `norm_xsection()`: 归一化到指定区间
+
+**被依赖**：
+- `cne5_factors/beta.py` 使用 `exp_weights`
+- `cne5_factors/momentum.py` 使用 `exp_weights`
+- `cne5_factors/residual_volatility.py` 使用 `exp_weights`
+- `cne5_factors/nonlinear_size.py` 使用 `winsorize_xsection`
+- `cne5_covariance.py` 使用 `exp_weights`
+- `cne5_risk.py` 使用 `exp_weights`
+- `model.py` 使用 `winsorize`
+
+**特点**：底层工具模块，被多个模块广泛使用。
+
+---
+
+### 完整数据流图
+
+```
+原始数据
+    ↓
+[cne5_factors/] 构建风格因子
+    ├── size.py → Size 因子
+    ├── beta.py → Beta 因子
+    ├── momentum.py → Momentum 因子
+    ├── residual_volatility.py → Residual Volatility 因子
+    ├── nonlinear_size.py → Non-linear Size 因子
+    ├── book_to_price.py → Book-to-Price 因子
+    ├── liquidity.py → Liquidity 因子
+    ├── earnings_yield.py → Earnings Yield 因子
+    ├── growth.py → Growth 因子
+    └── leverage.py → Leverage 因子
+    ↓
+style_df (所有风格因子)
+    ↓
+[model.py] 估计因子收益
+    ↓
+factor_returns_df (因子收益) + residual_returns_df (残差收益)
+    ↓
+[cne5_covariance.py] 估计因子协方差矩阵
+    ├── estimate_factor_covariance()
+    ├── optimization_bias_adjustment() (可选)
+    └── volatility_regime_adjustment() (可选)
+    ↓
+factor_cov (因子协方差矩阵)
+    ↓
+[cne5_risk.py] 估计特异风险
+    ├── estimate_specific_risk_ts()
+    └── bayesian_shrinkage() (可选)
+    ↓
+specific_risk_df (特异风险)
+    ↓
+完整 CNE5 风险模型
+```
+
+### 模块间调用关系总结
+
+1. **用户 → `cne5.py`**：用户主要通过 `cne5.py` 访问所有功能
+2. **`cne5.py` → `cne5_factors/`**：构建风格因子
+3. **`cne5.py` → `model.py`**：估计因子收益
+4. **`cne5.py` → `cne5_covariance.py`**：估计协方差矩阵
+5. **`cne5.py` → `cne5_risk.py`**：估计特异风险
+6. **所有模块 → `math.py`**：使用数学工具函数
+7. **`cne5_factors/` → `_utils.py`**：使用标准化和正交化函数
 
 ---
 
@@ -74,49 +398,22 @@ factor_returns_df, residual_returns_df = estimate_factor_returns(
 )
 ```
 
-### styles.py - 风格因子模块
+### cne5_factors/ - CNE5 风格因子模块
 
-三种经典风格因子：
+CNE5 模型的10个风格因子，每个因子独立文件：
 
-#### 1. `factor_mom()` - 动量因子
+- `size.py` - Size 因子
+- `beta.py` - Beta 因子
+- `momentum.py` - Momentum 因子
+- `residual_volatility.py` - Residual Volatility 因子
+- `nonlinear_size.py` - Non-linear Size 因子
+- `book_to_price.py` - Book-to-Price 因子
+- `liquidity.py` - Liquidity 因子
+- `earnings_yield.py` - Earnings Yield 因子
+- `growth.py` - Growth 因子
+- `leverage.py` - Leverage 因子
 
-使用指数加权滚动收益计算动量得分。
-
-```python
-from barra_copycat.styles import factor_mom
-
-mom_scores = factor_mom(
-    returns_df,
-    trailing_days=252,   # 1年回看
-    half_life=126,       # 半年半衰期
-    lag=20,              # 1个月滞后
-    winsor_factor=0.01   # 去掉1%极端值
-).collect()
-```
-
-![mom_factor](https://github.com/user-attachments/assets/88983248-a982-4c9e-9048-c01f1e7d191a)
-
-#### 2. `factor_sze()` - 规模因子
-
-基于市值对数，实现 Small-Minus-Big（SMB）。
-
-```python
-from barra_copycat.styles import factor_sze
-
-sze_scores = factor_sze(mkt_cap_df).collect()
-```
-
-#### 3. `factor_val()` - 价值因子
-
-基于价格比率（book-price, sales-price, cf-price）计算价值得分。
-
-```python
-from barra_copycat.styles import factor_val
-
-val_scores = factor_val(value_df).collect()
-```
-
-![value_factor](https://github.com/user-attachments/assets/ca5c1afc-128e-4cd6-9871-6d7eb0e77ebc)
+所有因子都遵循 CNE5 标准化规范：市值加权均值=0，等权标准差=1。
 
 ### math.py - 数学统计工具模块
 
@@ -129,11 +426,6 @@ val_scores = factor_val(value_df).collect()
 - `exp_weights()`：指数衰减权重
 - `norm_xsection()`：归一化到指定区间
 
-### utils.py - 数据清洗工具模块
-
-- `fill_features()`：前向填充缺失值
-- `smooth_features()`：滚动均值平滑
-- `top_n_by_group()`：分组取前N名
 
 ---
 
@@ -167,48 +459,70 @@ date	symbol	book_price	sales_price	cf_price	market_cap
 
 **注意**：您需要自行准备数据。推荐使用 Yahoo Finance 等数据源。
 
-### 2. 构建风格因子
+### 2. 构建 CNE5 风格因子
 
 ```python
-from barra_copycat.styles import factor_mom, factor_sze, factor_val
+from barra_copycat.cne5 import build_cne5_style_factors
 
-# 动量因子
-mom_scores = factor_mom(returns_df).collect()
-
-# 规模因子
-sze_scores = factor_sze(mkt_cap_df).collect()
-
-# 价值因子
-val_scores = factor_val(value_df).collect()
-
-# 合并所有风格因子
-style_df = mom_scores.join(sze_scores, on=["date", "symbol"]) \
-                     .join(val_scores, on=["date", "symbol"])
+# 构建所有 CNE5 风格因子
+style_df = build_cne5_style_factors(
+    returns_df,
+    mkt_cap_df,
+    risk_free_df,      # 可选
+    book_value_df,    # 可选
+    turnover_df,      # 可选
+    earnings_df,      # 可选
+    growth_df,        # 可选
+    leverage_df,      # 可选
+).collect()
 ```
 
-### 3. 估计因子收益
+### 3. 构建完整 CNE5 模型
 
 ```python
-from barra_copycat.utils import top_n_by_group
-from barra_copycat.model import estimate_factor_returns
+from barra_copycat.cne5 import build_complete_cne5_model
 
-# 合并数据并取市值前3000（如 Russell 3000）
-ddf = (
-    ret_df.join(cap_df, on=["date", "symbol"])
-    .join(sector_df, on="symbol")
-    .join(style_df, on=["date", "symbol"])
-    .drop_nulls()
-)
-ddf = top_n_by_group(ddf.lazy(), 3000, "market_cap", ("date",), True).collect()
-
-# 估计因子收益
-fac_df, eps_df = estimate_factor_returns(
-    returns_df, mkt_cap_df, sector_df, style_df,
-    winsor_factor=0.1, residualize_styles=False
+# 构建完整的 CNE5 模型（因子 + 收益 + 风险）
+results = build_complete_cne5_model(
+    returns_df,
+    mkt_cap_df,
+    sector_df,
+    risk_free_df,      # 可选
+    book_value_df,    # 可选
+    turnover_df,      # 可选
+    earnings_df,      # 可选
+    growth_df,        # 可选
+    leverage_df,      # 可选
 )
 
-print(fac_df.head())
-# date | market | Technology | Healthcare | ... | mom_score | sze_score | val_score
+# 访问结果
+style_factors = results['style_factors']
+factor_returns = results['factor_returns']      # 包含 country + 行业 + 风格因子收益
+factor_covariance = results['factor_covariance']  # 因子协方差矩阵
+specific_risks = results['specific_risks']     # 特异风险
+```
+
+或者分步构建：
+
+```python
+from barra_copycat.cne5 import (
+    build_cne5_style_factors,
+    estimate_cne5_factor_returns,
+    build_cne5_risk_model,
+)
+
+# 1. 构建风格因子
+style_df = build_cne5_style_factors(...).collect()
+
+# 2. 估计因子收益
+factor_returns_df, residual_returns_df = estimate_cne5_factor_returns(
+    returns_df, mkt_cap_df, sector_df, style_df
+)
+
+# 3. 构建风险模型
+factor_cov, specific_risks_df, risk_info = build_cne5_risk_model(
+    factor_returns_df, residual_returns_df, mkt_cap_df
+)
 ```
 
 在 M1 MacBook 上，10+ 年日频市场、行业、风格因子收益估计可在 1 分钟内完成。
@@ -258,32 +572,21 @@ print(fac_df.head())
 - numpy ~1.26.2
 - polars ~1.0.0
 
-### 开发依赖
-- pytest ~7.4.4
-
----
-
-## 测试
-
-项目使用 pytest 进行单元测试：
-
-```bash
-pytest barra_copycat/tests/
-```
-
 ---
 
 ## 总结
 
-- **model.py**：核心算法
-- **styles.py**：动量/规模/价值
-- **math.py + utils.py**：数据处理
-- **测试**：保证代码质量
+- **cne5.py**：CNE5 模型主入口
+- **cne5_factors/**：10个CNE5风格因子
+- **cne5_covariance.py**：因子协方差矩阵（OBA、VRA）
+- **cne5_risk.py**：特异风险模型
+- **model.py**：核心因子收益估计算法
+- **math.py**：数学和统计工具
 
 可基于本库：
-1. 进行量化分析
-2. 扩展新因子
-3. 调参优化
-4. 构建完整风险系统
+1. 构建完整的 CNE5 风险模型
+2. 进行量化分析和因子研究
+3. 支持组合优化和风险管理
+4. 扩展自定义因子
 
 **注意**：本项目不包含数据获取功能。您需要自行准备金融数据。
