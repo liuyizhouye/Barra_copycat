@@ -149,7 +149,7 @@ CNE5 引入了两项系统性偏差修正机制，用于验证并改进因子协
 
 ```python
 import polars as pl
-from barra_copycat.cne5 import build_complete_cne5_model
+from cne5.cne5 import build_complete_cne5_model
 from verification import (
     calculate_all_factor_validations,
     calculate_specific_risk_validations,
@@ -279,5 +279,5 @@ verification/
 ## 参考文档
 
 - 《Barra China Equity Model (CNE5) Empirical Notes, July 2012》
-- CNE5 模型实现：`barra_copycat.cne5`
+- CNE5 模型实现：`cne5.cne5`
 - 验证规范：`verification/Verification.md`（原始文档）

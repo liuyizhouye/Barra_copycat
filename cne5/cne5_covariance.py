@@ -10,7 +10,7 @@ import numpy as np
 import polars as pl
 from typing import Literal
 
-from barra_copycat.math import exp_weights
+from cne5.math import exp_weights
 
 
 def estimate_factor_covariance(

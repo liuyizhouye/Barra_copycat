@@ -21,7 +21,7 @@ pip install Barra-copycat
 ### 文件结构
 
 ```
-barra_copycat/
+cne5/
 ├── __init__.py              # 包初始化文件
 ├── cne5.py                  # CNE5 模型主模块（入口）
 ├── cne5_covariance.py       # 因子协方差矩阵（OBA、VRA）
@@ -386,7 +386,7 @@ specific_risk_df (特异风险)
 
 **代码示例**：
 ```python
-from barra_copycat.model import estimate_factor_returns
+from cne5.model import estimate_factor_returns
 
 factor_returns_df, residual_returns_df = estimate_factor_returns(
     returns_df,        # 日度收益数据
@@ -462,7 +462,7 @@ date	symbol	book_price	sales_price	cf_price	market_cap
 ### 2. 构建 CNE5 风格因子
 
 ```python
-from barra_copycat.cne5 import build_cne5_style_factors
+from cne5.cne5 import build_cne5_style_factors
 
 # 构建所有 CNE5 风格因子
 style_df = build_cne5_style_factors(
@@ -480,7 +480,7 @@ style_df = build_cne5_style_factors(
 ### 3. 构建完整 CNE5 模型
 
 ```python
-from barra_copycat.cne5 import build_complete_cne5_model
+from cne5.cne5 import build_complete_cne5_model
 
 # 构建完整的 CNE5 模型（因子 + 收益 + 风险）
 results = build_complete_cne5_model(
@@ -505,7 +505,7 @@ specific_risks = results['specific_risks']     # 特异风险
 或者分步构建：
 
 ```python
-from barra_copycat.cne5 import (
+from cne5.cne5 import (
     build_cne5_style_factors,
     estimate_cne5_factor_returns,
     build_cne5_risk_model,

@@ -4,8 +4,8 @@ import numpy as np
 import polars as pl
 import polars.exceptions as pl_exc
 
-from barra_copycat.math import exp_weights
-from barra_copycat.cne5_factors._utils import standardize_cne5, orthogonalize_factor
+from cne5.math import exp_weights
+from cne5.cne5_factors._utils import standardize_cne5, orthogonalize_factor
 
 
 def factor_residual_volatility_cne5(

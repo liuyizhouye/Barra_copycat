@@ -8,7 +8,7 @@
 import numpy as np
 import polars as pl
 
-from barra_copycat.cne5_covariance import (
+from cne5.cne5_covariance import (
     estimate_factor_covariance,
     optimization_bias_adjustment,
     volatility_regime_adjustment,

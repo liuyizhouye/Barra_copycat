@@ -3,7 +3,7 @@
 import polars as pl
 import polars.exceptions as pl_exc
 
-from barra_copycat.cne5_factors._utils import standardize_cne5
+from cne5.cne5_factors._utils import standardize_cne5
 
 
 def factor_leverage_cne5(

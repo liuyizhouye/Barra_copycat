@@ -15,7 +15,7 @@ except ImportError:
     # 如果没有 scipy，使用 numpy 的近似实现
     stats = None
 
-from barra_copycat.cne5_risk import (
+from cne5.cne5_risk import (
     calculate_rms_decomposition,
     calculate_style_stability,
     calculate_vif,

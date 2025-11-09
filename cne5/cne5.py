@@ -15,7 +15,7 @@
 import numpy as np
 import polars as pl
 
-from barra_copycat.cne5_factors import (
+from cne5.cne5_factors import (
     factor_size_cne5,
     factor_beta_cne5,
     factor_momentum_cne5,
@@ -27,13 +27,13 @@ from barra_copycat.cne5_factors import (
     factor_growth_cne5,
     factor_leverage_cne5,
 )
-from barra_copycat.model import estimate_factor_returns
-from barra_copycat.cne5_covariance import (
+from cne5.model import estimate_factor_returns
+from cne5.cne5_covariance import (
     estimate_factor_covariance,
     optimization_bias_adjustment,
     volatility_regime_adjustment,
 )
-from barra_copycat.cne5_risk import (
+from cne5.cne5_risk import (
     estimate_specific_risk_ts,
     bayesian_shrinkage,
     calculate_rms_decomposition,
