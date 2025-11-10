@@ -1,5 +1,7 @@
 """CNE5 Momentum 因子: 滞后1个月后，过去504日超额对数收益的指数加权和。"""
 
+from typing import Union, Optional
+
 import numpy as np
 import polars as pl
 import polars.exceptions as pl_exc

@@ -118,17 +118,24 @@ def optimization_bias_adjustment(
         # 计算样本协方差
         sample_cov = np.cov(random_returns.T)
 
-        # 特征值分解
+        # 特征值分解并排序（降序）
         sample_eigenvals, _ = np.linalg.eigh(sample_cov)
+        sample_eigenvals = np.sort(sample_eigenvals)[::-1]  # 降序排列
 
-        # 计算偏差（简化版本）
+        # 原始特征值也降序排列
+        eigenvals_sorted = np.sort(eigenvals)[::-1]
+
+        # 计算偏差（按特征值大小匹配）
         for j in range(n_factors):
-            if eigenvals[j] > 1e-10:
-                bias_ratio = sample_eigenvals[j] / eigenvals[j]
+            if eigenvals_sorted[j] > 1e-10:
+                bias_ratio = sample_eigenvals[j] / eigenvals_sorted[j]
                 bias_factors[j] = (bias_factors[j] * i + bias_ratio) / (i + 1)
 
-    # 调整特征值
-    adjusted_eigenvals = eigenvals / bias_factors
+    # 调整特征值（需要恢复原始顺序）
+    # 将排序后的bias_factors映射回原始特征值顺序
+    sort_indices = np.argsort(eigenvals)[::-1]
+    inverse_indices = np.argsort(sort_indices)
+    adjusted_eigenvals = eigenvals / bias_factors[inverse_indices]
 
     # 重构协方差矩阵
     adjusted_cov = eigenvecs @ np.diag(adjusted_eigenvals) @ eigenvecs.T
